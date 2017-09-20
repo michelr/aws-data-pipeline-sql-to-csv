@@ -1,0 +1,120 @@
+{
+    "objects": [{
+                    "failureAndRerunMode": "CASCADE",
+                    "resourceRole": "DataPipelineDefaultResourceRole",
+                    "role": "DataPipelineDefaultRole",
+                    "pipelineLogUri": "#{myS3LogPath}",
+                    "scheduleType": "cron",
+                    "schedule": {
+                        "ref": "DefaultSchedule"
+                    },
+                    "name": "Default",
+                    "id": "Default"
+                },
+                {
+                    "type": "Schedule",
+                    "id": "DefaultSchedule",
+                    "startAt": "FIRST_ACTIVATION_DATE_TIME",
+                    "period": "4 hours"
+                },
+                {
+                    "type": "Ec2Resource",
+                    "name": "EC t1.micro",
+                    "instanceType": "t1.micro",
+                    "id": "ResourceId_1",
+                    "subnetId": "#{mySubnet}",
+                    "resourceRole": "DataPipelineDefaultResourceRole",
+                    "role": "DataPipelineDefaultRole",
+                    "securityGroupIds": "#{mySecurityGroup}",                    
+                    "terminateAfter": "2 Hours"
+                },
+                {
+                    "directoryPath": "#{myS3DumpPath}",
+                    "name": "S3",
+                    "id": "S3DataNodeId_1",
+                    "type": "S3DataNode"
+                },
+                {
+                    "directoryPath": "#{myS3ScriptPath}",
+                    "name": "S3 scripts",
+                    "id": "S3DataNodeId_2",
+                    "type": "S3DataNode"
+                },
+                {
+                    "type": "ShellCommandActivity",
+                    "name": "Dump query to csv",
+                    "id": "ShellCommandActivityId_1",
+                    "output": {
+                        "ref": "S3DataNodeId_1"
+                    },
+                    "input": {
+                        "ref": "S3DataNodeId_2"
+                    },
+                    "stage": "true",
+                    
+                    "runsOn": {
+                        "ref": "ResourceId_1"
+                    },
+                    "scriptArgument": ["filename", "select * from profile_user"],
+                    "command": "bash -x ${INPUT1_STAGING_DIR}/dump_sql.sh $1 \"$2\" #{myPostgresHost} #{myPostgresUser} #{myPostgresDBName} #{*myPostgresPassword}"
+                }],
+                "parameters": [
+                    {
+                        "description": "Security group",
+                        "id": "mySecurityGroup",
+                        "type": "String"
+                    },
+                    {
+                        "description": "Subnet",
+                        "id": "mySubnet",
+                        "type": "String"
+                    },
+                    {
+                        "description": "S3 dump path",
+                        "id": "myS3DumpPath",
+                        "type": "String"
+                    },
+                    {
+                        "description": "S3 log path",
+                        "id": "myS3LogPath",
+                        "type": "String"
+                    },
+                    {
+                        "description": "S3 script path",
+                        "id": "myS3ScriptPath",
+                        "type": "String"
+                    },
+                    {
+                        "description": "DB host",
+                        "id": "myPostgresHost",
+                        "type": "String"
+                    },
+                    {
+                        "description": "DB name",
+                        "id": "myPostgresDBName",
+                        "type": "String"
+                    },
+                    {
+                        "description": "DB user",
+                        "id": "myPostgresUser",
+                        "type": "String"
+                    },
+                    {
+                        "description": "DB password",
+                        "id": "*myPostgresPassword",
+                        "type": "String"
+                    }
+                ],
+                "values":
+                {
+                    "mySecurityGroup": "",
+                    "mySubnet": "",
+                    "myS3DumpPath": "s3://data-etl/",
+                    "myS3LogPath": "s3://data-etl/logs/",
+                    "myS3ScriptPath": "s3://data-etl/scripts/",
+                    "myPostgresHost": "",
+                    "myPostgresDBName": "",
+                    "myPostgresUser": "",
+                    "*myPostgresPassword": ""
+                }
+}
